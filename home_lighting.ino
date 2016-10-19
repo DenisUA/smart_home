@@ -8,7 +8,7 @@ const int wardrobe_led_1 = 9;
 const int wardrobe_led_2 = 10;
 const int wardrobe_motion_sensor = 14;
 
-const int hallway_bright_sensor = 2;
+const int bright_sensor = 2;
 const int light_duration = 15000;
 
 unsigned long hallway_start_time = 0;
@@ -20,7 +20,7 @@ void setup() {
   pinMode(hallway_led_1, OUTPUT);
   pinMode(hallway_led_2, OUTPUT);
   pinMode(hallway_motion_sensor, INPUT);
-  pinMode(hallway_bright_sensor, INPUT);
+  pinMode(bright_sensor, INPUT);
   pinMode(wardrobe_led_1, OUTPUT);
   pinMode(wardrobe_led_2, OUTPUT);
   pinMode(wardrobe_motion_sensor, INPUT);
@@ -30,17 +30,18 @@ void loop() {
   hallway_motion = portToBool(hallway_motion_sensor);
   wardrobe_motion = portToBool(wardrobe_motion_sensor);
 
-  perform(hallway_motion, hallway_led_1, hallway_led_2, hallway_bright_sensor, hallway_start_time);
-  perform(wardrobe_motion, wardrobe_led_1, wardrobe_led_2, hallway_bright_sensor, wardrobe_start_time);
+  perform(hallway_motion, hallway_led_1, hallway_led_2, hallway_start_time);
+  perform(wardrobe_motion, wardrobe_led_1, wardrobe_led_2, wardrobe_start_time);
+
   delay(500);
 }
 
-void perform(bool motion, int led_pin, int led_pin_1, int bright_sensor_pin, unsigned long &start_time) {
+void perform(bool motion, int led_pin, int led_pin_1, unsigned long &start_time) {
 
-  if (!isDarkness(bright_sensor_pin))
+  if (isBrightly())
   {
-    //there is no darkness - just disable led
-    Serial.println("no darkness - disabling");
+    //room lights are on -> just disable led
+    Serial.println("no darkness -> disabling");
     checkAndDisable(led_pin, led_pin_1);
     return;
   }
@@ -52,7 +53,7 @@ void perform(bool motion, int led_pin, int led_pin_1, int bright_sensor_pin, uns
 
     if (digitalRead(led_pin) == LOW)
     {
-      Serial.println("led is off - need to enable");
+      Serial.println("led is off -> need to enable");
       //led is off - need to enable
       fadeIn(led_pin, led_pin_1);
     }
@@ -109,13 +110,13 @@ void fadeOut(int port, int port_1) {
     analogWrite(port, brightness);
     analogWrite(port_1, brightness);
     brightness -= 1;
-    delay(10);
+    delay(15);
   }
 }
 
-bool isDarkness(int sensorPin)
+bool isBrightly()
 {
-  return digitalRead(sensorPin) == HIGH;
+  return digitalRead(bright_sensor) == LOW;
 }
 
 unsigned long getRemainingTime(unsigned long startTime)
@@ -130,4 +131,3 @@ unsigned long getRemainingTime(unsigned long startTime)
     return 0;
   }
 }
-
