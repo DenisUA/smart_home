@@ -119,10 +119,10 @@ bool isBrightly()
   return digitalRead(bright_sensor) == LOW;
 }
 
-unsigned long getRemainingTime(unsigned long startTime)
+long getRemainingTime(long startTime)
 {
   unsigned long remaining = (startTime + light_duration) - millis();
-  if (remaining >= 0 && remaining < 1000000000 )
+  if (remaining >= 0)
   {
     return remaining;
   }
