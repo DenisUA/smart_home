@@ -30,19 +30,22 @@ void loop() {
   hallway_motion = portToBool(hallway_motion_sensor);
   wardrobe_motion = portToBool(wardrobe_motion_sensor);
 
-  perform(hallway_motion, hallway_led_1, hallway_led_2, hallway_bright_sensor, hallway_start_time);
-  perform(wardrobe_motion, wardrobe_led_1, wardrobe_led_2, hallway_bright_sensor, wardrobe_start_time);
+  perform(hallway_motion, hallway_led_1, hallway_led_2, hallway_bright_sensor, hallway_start_time, true);
+  perform(wardrobe_motion, wardrobe_led_1, wardrobe_led_2, hallway_bright_sensor, wardrobe_start_time, false);
   delay(500);
 }
 
-void perform(bool motion, int led_pin, int led_pin_1, int bright_sensor_pin, unsigned long &start_time) {
+void perform(bool motion, int led_pin, int led_pin_1, int bright_sensor_pin, unsigned long &start_time, bool less_light) {
 
-  if (!isDarkness(bright_sensor_pin))
+  if (isBrightly(bright_sensor_pin))
   {
     //there is no darkness - just disable led
-    Serial.println("no darkness - disabling");
-    checkAndDisable(led_pin, led_pin_1);
-    return;
+    if (less_light)
+    {
+      Serial.println("no darkness -> disabling");
+      checkAndDisable(led_pin, led_pin_1);
+      return;
+    }
   }
 
   if (motion)
@@ -52,7 +55,7 @@ void perform(bool motion, int led_pin, int led_pin_1, int bright_sensor_pin, uns
 
     if (digitalRead(led_pin) == LOW)
     {
-      Serial.println("led is off - need to enable");
+      Serial.println("led is off -> need to enable");
       //led is off - need to enable
       fadeIn(led_pin, led_pin_1);
     }
@@ -109,19 +112,19 @@ void fadeOut(int port, int port_1) {
     analogWrite(port, brightness);
     analogWrite(port_1, brightness);
     brightness -= 1;
-    delay(10);
+    delay(15);
   }
 }
 
-bool isDarkness(int sensorPin)
+bool isBrightly(int sensorPin)
 {
-  return digitalRead(sensorPin) == HIGH;
+  return digitalRead(sensorPin) == LOW;
 }
 
-unsigned long getRemainingTime(unsigned long startTime)
+long getRemainingTime(long startTime)
 {
   unsigned long remaining = (startTime + light_duration) - millis();
-  if (remaining >= 0 && remaining < 1000000000 )
+  if (remaining >= 0)
   {
     return remaining;
   }
@@ -130,4 +133,3 @@ unsigned long getRemainingTime(unsigned long startTime)
     return 0;
   }
 }
-
