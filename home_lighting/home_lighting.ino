@@ -8,7 +8,7 @@ const int wardrobe_led_1 = 9;
 const int wardrobe_led_2 = 10;
 const int wardrobe_motion_sensor = 14;
 
-const int bright_sensor = 2;
+const int hallway_bright_sensor = 2;
 const int light_duration = 15000;
 
 unsigned long hallway_start_time = 0;
@@ -20,7 +20,7 @@ void setup() {
   pinMode(hallway_led_1, OUTPUT);
   pinMode(hallway_led_2, OUTPUT);
   pinMode(hallway_motion_sensor, INPUT);
-  pinMode(bright_sensor, INPUT);
+  pinMode(hallway_bright_sensor, INPUT);
   pinMode(wardrobe_led_1, OUTPUT);
   pinMode(wardrobe_led_2, OUTPUT);
   pinMode(wardrobe_motion_sensor, INPUT);
@@ -30,20 +30,22 @@ void loop() {
   hallway_motion = portToBool(hallway_motion_sensor);
   wardrobe_motion = portToBool(wardrobe_motion_sensor);
 
-  perform(hallway_motion, hallway_led_1, hallway_led_2, hallway_start_time);
-  perform(wardrobe_motion, wardrobe_led_1, wardrobe_led_2, wardrobe_start_time);
-
+  perform(hallway_motion, hallway_led_1, hallway_led_2, hallway_bright_sensor, hallway_start_time, true);
+  perform(wardrobe_motion, wardrobe_led_1, wardrobe_led_2, hallway_bright_sensor, wardrobe_start_time, false);
   delay(500);
 }
 
-void perform(bool motion, int led_pin, int led_pin_1, unsigned long &start_time) {
+void perform(bool motion, int led_pin, int led_pin_1, int bright_sensor_pin, unsigned long &start_time, bool less_light) {
 
-  if (isBrightly())
+  if (isBrightly(bright_sensor_pin))
   {
-    //room lights are on -> just disable led
-    Serial.println("no darkness -> disabling");
-    checkAndDisable(led_pin, led_pin_1);
-    return;
+    //there is no darkness - just disable led
+    if (less_light)
+    {
+      Serial.println("no darkness -> disabling");
+      checkAndDisable(led_pin, led_pin_1);
+      return;
+    }
   }
 
   if (motion)
@@ -114,9 +116,9 @@ void fadeOut(int port, int port_1) {
   }
 }
 
-bool isBrightly()
+bool isBrightly(int sensorPin)
 {
-  return digitalRead(bright_sensor) == LOW;
+  return digitalRead(sensorPin) == LOW;
 }
 
 long getRemainingTime(long startTime)
